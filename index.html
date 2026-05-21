@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUM — Networking Inteligente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg-elevated: #14141c;
+    --bg-card: #1a1a24;
+    --bg-soft: #1f1f2b;
+    --border: #2a2a38;
+    --border-hover: #3a3a4a;
+    --text: #f5f5f7;
+    --text-muted: #8a8a98;
+    --text-dim: #5a5a68;
+    --accent: #d4ff3e;
+    --accent-dim: #a8cc2e;
+    --danger: #ff4757;
+    --success: #2ed573;
+    --premium: #ffd700;
+    --gradient-1: linear-gradient(135deg, #d4ff3e 0%, #a8cc2e 100%);
+    --gradient-2: linear-gradient(135deg, #ff4757 0%, #c0392b 100%);
+    --display: 'Fraunces', serif;
+    --body: 'Inter Tight', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    height: 100%;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at top, #14141c 0%, #0a0a0f 60%);
+  }
+
+  /* Phone frame for demo */
+  .app-frame {
+    width: 100%;
+    max-width: 440px;
+    height: 100vh;
+    max-height: 900px;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+  }
+
+  @media (min-width: 500px) {
+    .app-frame {
+      border-radius: 32px;
+      border: 1px solid var(--border);
+      box-shadow: 0 40px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(212, 255, 62, 0.04);
+    }
+  }
+
+  /* Top bar */
+  .top-bar {
+    padding: 20px 24px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    z-index: 10;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+  }
+  .logo .dot { color: var(--accent); font-size: 28px; line-height: 0; }
+
+  .top-bar-actions { display: flex; gap: 8px; }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { background: var(--bg-soft); color: var(--text); }
+  .icon-btn svg { width: 18px; height: 18px; }
+
+  /* Main view container */
+  .views {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .view {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    display: none;
+    flex-direction: column;
+  }
+  .view.active { display: flex; }
+  .view::-webkit-scrollbar { width: 0; }
+
+  /* ============== DISCOVER (SWIPE) ============== */
+  .discover {
+    padding: 16px 16px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .event-banner {
+    background: linear-gradient(135deg, rgba(212,255,62,0.12) 0%, rgba(212,255,62,0.02) 100%);
+    border: 1px solid rgba(212,255,62,0.25);
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+  .event-banner-text { font-size: 13px; }
+  .event-banner-text strong { color: var(--accent); font-weight: 600; }
+  .event-banner-text small { color: var(--text-muted); font-size: 11px; display: block; margin-top: 2px; }
+  .event-banner svg { width: 14px; height: 14px; color: var(--accent); }
+
+  .card-stack {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+  }
+
+  .swipe-card {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-card);
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    cursor: grab;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+  }
+  .swipe-card.dragging { transition: none; cursor: grabbing; }
+  .swipe-card.gone { pointer-events: none; }
+
+  .card-photo {
+    flex: 0 0 60%;
+    background: var(--bg-soft);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-photo .initials {
+    font-family: var(--display);
+    font-size: 96px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: -0.04em;
+  }
+  .card-photo .photo-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10,10,15,0.95) 0%, rgba(10,10,15,0.4) 40%, transparent 60%);
+  }
+
+  .card-info {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 20px;
+    z-index: 2;
+  }
+  .card-name {
+    font-family: var(--display);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 2px;
+  }
+  .card-name .age { color: var(--text-muted); font-weight: 400; font-size: 22px; }
+  .card-role {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .card-company {
+    color: var(--text-muted);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-company svg { width: 12px; height: 12px; }
+
+  .card-details {
+    padding: 18px 20px 20px;
+    background: var(--bg-card);
+    flex: 0 0 40%;
+    overflow-y: auto;
+  }
+  .card-details::-webkit-scrollbar { width: 0; }
+
+  .detail-section { margin-bottom: 14px; }
+  .detail-section:last-child { margin-bottom: 0; }
+  .detail-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .detail-bio { font-size: 13px; line-height: 1.5; color: var(--text); }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    padding: 5px 10px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 11px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .tag.accent { background: rgba(212,255,62,0.1); border-color: rgba(212,255,62,0.3); color: var(--accent); }
+
+  .priority-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: var(--premium);
+    color: #1a1a24;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 3;
+  }
+  .priority-badge svg { width: 10px; height: 10px; }
+
+  /* Swipe overlay indicators */
+  .swipe-indicator {
+    position: absolute;
+    top: 32px;
+    padding: 8px 18px;
+    border: 3px solid;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 0.1em;
+    opacity: 0;
+    transition: opacity 0.1s;
+    z-index: 4;
+    text-transform: uppercase;
+  }
+  .swipe-indicator.like {
+    right: 24px;
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: rotate(15deg);
+  }
+  .swipe-indicator.nope {
+    left: 24px;
+    border-color: var(--danger);
+    color: var(--danger);
+    transform: rotate(-15deg);
+  }
+
+  /* Action buttons */
+  .swipe-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0 8px;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .action-btn:hover { transform: scale(1.06); }
+  .action-btn:active { transform: scale(0.94); }
+
+  .action-btn.small { width: 48px; height: 48px; }
+  .action-btn.large { width: 60px; height: 60px; }
+
+  .action-btn.nope { color: var(--danger); border-color: rgba(255,71,87,0.3); }
+  .action-btn.like { color: var(--accent); border-color: rgba(212,255,62,0.3); }
+  .action-btn.boost { color: var(--premium); border-color: rgba(255,215,0,0.3); }
+  .action-btn.rewind { color: #ffa502; border-color: rgba(255,165,2,0.3); }
+  .action-btn.super { color: #4a9eff; border-color: rgba(74,158,255,0.3); }
+
+  .action-btn svg { width: 22px; height: 22px; }
+  .action-btn.large svg { width: 28px; height: 28px; }
+
+  .empty-stack {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+  }
+  .empty-stack h3 {
+    font-family: var(--display);
+    color: var(--text);
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+
+  /* ============== MATCH MODAL ============== */
+  .match-modal {
+    position: absolute;
+    inset: 0;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(30px);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 40px;
+    text-align: center;
+  }
+  .match-modal.show { display: flex; animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .match-title {
+    font-family: var(--display);
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+    animation: scaleIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1.2);
+  }
+  @keyframes scaleIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .match-subtitle { color: var(--text-muted); margin-bottom: 32px; font-size: 15px; }
+
+  .match-avatars { display: flex; gap: 16px; margin-bottom: 32px; }
+  .match-avatar {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--display);
+    font-size: 36px;
+    font-weight: 600;
+    color: white;
+  }
+
+  .match-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 280px; }
+  .btn {
+    padding: 14px 24px;
+    border-radius: 100px;
+    font-family: var(--body);
+    font-weight: 600;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:hover { background: var(--bg-soft); }
+  .btn.primary {
+    background: var(--accent);
+    color: #0a0a0f;
+    border-color: var(--accent);
+  }
+  .btn.primary:hover { background: var(--accent-dim); }
+  .btn.ghost { background: transparent; color: var(--text-muted); border-color: transparent; }
+
+  /* ============== CHATS ============== */
+  .chats { padding: 16px; }
+  .section-title {
+    font-family: var(--display);
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .section-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+
+  .matches-row {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .matches-row::-webkit-scrollbar { height: 0; }
+
+  .match-item {
+    flex-shrink: 0;
+    text-align: center;
+    cursor: pointer;
+  }
+  .match-item-avatar {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 6px;
+    border: 2px solid var(--accent);
+    position: relative;
+  }
+  .match-item.unread .match-item-avatar::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 14px; height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+  }
+  .match-item-name { font-size: 11px; color: var(--text-muted); max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .chat-list { display: flex; flex-direction: column; gap: 4px; }
+  .chat-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    cursor: pointer;
+    align-items: center;
+    transition: background 0.2s;
+  }
+  .chat-item:hover { background: var(--bg-elevated); }
+
+  .chat-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .chat-info { flex: 1; min-width: 0; }
+  .chat-header-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+  .chat-name { font-weight: 600; font-size: 15px; }
+  .chat-time { font-size: 11px; color: var(--text-dim); }
+  .chat-preview {
+    font-size: 13px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .chat-preview.unread { color: var(--text); font-weight: 500; }
+  .chat-badge {
+    background: var(--accent);
+    color: #0a0a0f;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 100px;
+    margin-left: 8px;
+  }
+
+  /* ============== CHAT ROOM ============== */
+  .chat-room {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+  }
+  .chat-room.active { display: flex; }
+
+  .chat-room-header {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+  }
+  .back-btn {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+  }
+  .back-btn svg { width: 22px; height: 22px; }
+  .chat-room-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+  }
+  .chat-room-info { flex: 1; }
+  .chat-room-name { font-weight: 600; font-size: 15px; }
+  .chat-room-status { font-size: 11px; color: var(--accent); }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .messages::-webkit-scrollbar { width: 0; }
+
+  .message {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .message.them {
+    background: var(--bg-elevated);
+    border-bottom-left-radius: 4px;
+    align-self: flex-start;
+  }
+  .message.me {
+    background: var(--accent);
+    color: #0a0a0f;
+    border-bottom-right-radius: 4px;
+    align-self: flex-end;
+    font-weight: 500;
+  }
+
+  .match-banner {
+    text-align: center;
+    padding: 16px;
+    color: var(--text-muted);
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .match-banner strong { color: var(--accent); }
+
+  .message-input {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .message-input input {
+    flex: 1;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 12px 18px;
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 14px;
+    outline: none;
+  }
+  .message-input input:focus { border-color: var(--accent); }
+  .send-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: #0a0a0f;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .send-btn svg { width: 18px; height: 18px; }
+
+  /* ============== EVENTS ============== */
+  .events { padding: 16px 16px 100px; }
+
+  .events-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .events-filters::-webkit-scrollbar { height: 0; }
+  .filter-chip {
+    padding: 7px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .filter-chip.active {
+    background: var(--accent);
+    color: #0a0a0f;
+    border-color: var(--accent);
+  }
+
+  .event-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    margin-bottom: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .event-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+
+  .event-cover {
+    height: 140px;
+    background: linear-gradient(135deg, var(--bg-soft) 0%, var(--bg-elevated) 100%);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .event-cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      radial-gradient(circle at 20% 30%, rgba(212,255,62,0.15) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(74,158,255,0.1) 0%, transparent 40%);
+  }
+  .event-cover-text {
+    font-family: var(--display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-align: center;
+    z-index: 1;
+    padding: 0 20px;
+  }
+  .event-date-tag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 10px;
+    text-align: center;
+    z-index: 2;
+  }
+  .event-date-day { font-family: var(--display); font-size: 18px; font-weight: 700; line-height: 1; }
+  .event-date-month { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+
+  .event-active-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--accent);
+    color: #0a0a0f;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    z-index: 2;
+  }
+  .event-active-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: #0a0a0f;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .event-body { padding: 14px 16px 16px; }
+  .event-name { font-family: var(--display); font-size: 18px; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.01em; }
+  .event-meta { display: flex; gap: 12px; font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+  .event-meta span { display: flex; align-items: center; gap: 4px; }
+  .event-meta svg { width: 12px; height: 12px; }
+
+  .event-stats { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border); }
+  .event-attendees { display: flex; align-items: center; }
+  .attendee-bubble {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-card);
+    margin-left: -8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: white;
+  }
+  .attendee-bubble:first-child { margin-left: 0; }
+  .attendee-count { margin-left: 8px; font-size: 12px; color: var(--text-muted); }
+  .event-join-btn {
+    padding: 8px 16px;
+    background: var(--accent);
+    color: #0a0a0f;
+    border: none;
+    border-radius: 100px;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .event-join-btn.joined { background: var(--bg-soft); color: var(--text); }
+
+  /* ============== PROFILE ============== */
+  .profile { padding: 0 0 100px; }
+
+  .profile-header {
+    padding: 24px 20px 20px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .profile-avatar {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    margin: 0 auto 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--display);
+    font-size: 44px;
+    font-weight: 600;
+    color: white;
+    position: relative;
+    cursor: pointer;
+    background: linear-gradient(135deg, #4a4a5e 0%, #2a2a3e 100%);
+  }
+  .profile-avatar .edit-photo {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 32px; height: 32px;
+    background: var(--accent);
+    color: #0a0a0f;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 3px solid var(--bg);
+  }
+  .profile-avatar .edit-photo svg { width: 14px; height: 14px; }
+  .profile-name { font-family: var(--display); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+  .profile-role { color: var(--text-muted); font-size: 14px; margin-top: 2px; }
+
+  .profile-stats {
+    display: flex;
+    justify-content: space-around;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .profile-stat { text-align: center; }
+  .profile-stat-value { font-family: var(--display); font-size: 22px; font-weight: 700; color: var(--accent); }
+  .profile-stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+
+  .profile-section { padding: 20px; border-bottom: 1px solid var(--border); }
+  .profile-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .form-field { margin-bottom: 14px; }
+  .form-field:last-child { margin-bottom: 0; }
+  .form-field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .form-field input, .form-field textarea, .form-field select {
+    width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-field input:focus, .form-field textarea:focus, .form-field select:focus {
+    border-color: var(--accent);
+  }
+  .form-field textarea { resize: none; min-height: 70px; }
+
+  .interests-pickable { display: flex; flex-wrap: wrap; gap: 8px; }
+  .interest-pick {
+    padding: 8px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .interest-pick.selected {
+    background: rgba(212,255,62,0.12);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ============== SUBSCRIPTION ============== */
+  .subs-trigger {
+    margin: 20px;
+    padding: 18px;
+    background: linear-gradient(135deg, rgba(255,215,0,0.12) 0%, rgba(212,255,62,0.08) 100%);
+    border: 1px solid rgba(255,215,0,0.25);
+    border-radius: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .subs-trigger-icon {
+    width: 44px; height: 44px;
+    background: var(--premium);
+    color: #0a0a0f;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .subs-trigger-icon svg { width: 22px; height: 22px; }
+  .subs-trigger-text { flex: 1; }
+  .subs-trigger-text strong { display: block; font-family: var(--display); font-weight: 600; font-size: 16px; }
+  .subs-trigger-text small { color: var(--text-muted); font-size: 12px; }
+  .subs-trigger > svg { width: 16px; height: 16px; color: var(--text-muted); }
+
+  /* Subscription modal */
+  .subs-modal {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .subs-modal.show { display: flex; }
+  .subs-modal::-webkit-scrollbar { width: 0; }
+
+  .subs-modal-header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .subs-modal-title { font-family: var(--display); font-size: 20px; font-weight: 600; }
+  .close-modal {
+    width: 36px; height: 36px;
+    background: var(--bg-elevated);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  .subs-hero {
+    text-align: center;
+    padding: 12px 24px 32px;
+  }
+  .subs-hero h1 {
+    font-family: var(--display);
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .subs-hero h1 em {
+    font-style: italic;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subs-hero p { color: var(--text-muted); font-size: 14px; }
+
+  .plans { padding: 0 16px 24px; display: flex; flex-direction: column; gap: 12px; }
+
+  .plan {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 20px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+  }
+  .plan.selected { border-color: var(--accent); background: linear-gradient(135deg, rgba(212,255,62,0.05) 0%, transparent 100%); }
+  .plan.premier { border-color: rgba(255,215,0,0.3); }
+  .plan.premier.selected { border-color: var(--premium); background: linear-gradient(135deg, rgba(255,215,0,0.05) 0%, transparent 100%); }
+
+  .plan-popular {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    background: var(--premium);
+    color: #0a0a0f;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .plan-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .plan-name { font-family: var(--display); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+  .plan-tagline { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .plan-price { text-align: right; }
+  .plan-price-amount { font-family: var(--display); font-size: 28px; font-weight: 700; }
+  .plan-price-amount small { font-size: 14px; color: var(--text-muted); font-weight: 400; }
+  .plan-price-period { font-size: 11px; color: var(--text-muted); }
+
+  .plan-features { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .plan-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text);
+  }
+  .plan-features li svg {
+    width: 14px; height: 14px;
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .plan-features li.dim { color: var(--text-dim); }
+  .plan-features li.dim svg { color: var(--text-dim); }
+
+  .plan.premier .plan-features li svg { color: var(--premium); }
+
+  .subs-cta {
+    padding: 16px 20px 24px;
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(to top, var(--bg) 70%, transparent);
+  }
+  .subs-cta-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #0a0a0f;
+    border: none;
+    border-radius: 100px;
+    font-family: var(--body);
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .subs-cta-btn:hover { background: var(--accent-dim); }
+
+  /* ============== BOTTOM NAV ============== */
+  .bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 8px;
+    border-top: 1px solid var(--border);
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(20px);
+    flex-shrink: 0;
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: color 0.2s;
+    position: relative;
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-item svg { width: 22px; height: 22px; }
+  .nav-item span { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; }
+  .nav-item .nav-dot {
+    position: absolute;
+    top: 4px;
+    right: 50%;
+    transform: translateX(14px);
+    width: 7px; height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: none;
+  }
+  .nav-item.has-notif .nav-dot { display: block; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 1000;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="app-frame">
+
+  <!-- ============ TOP BAR ============ -->
+  <div class="top-bar" id="topBar">
+    <div class="logo">NEXUM<span class="dot">.</span></div>
+    <div class="top-bar-actions">
+      <div class="icon-btn" id="filterBtn" title="Filtros">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+      </div>
+      <div class="icon-btn" id="boostBtn" title="Boost">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ VIEWS ============ -->
+  <div class="views">
+
+    <!-- DISCOVER -->
+    <div class="view active" id="view-discover">
+      <div class="discover">
+        <div class="event-banner" onclick="switchView('events')">
+          <div class="event-banner-text">
+            <strong>● Activo: NAREP Summit San Diego</strong>
+            <small>3,247 asistentes · empieza en 6 días</small>
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+
+        <div class="card-stack" id="cardStack"></div>
+
+        <div class="swipe-actions">
+          <div class="action-btn small rewind" onclick="rewindCard()" title="Rebobinar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          </div>
+          <div class="action-btn large nope" onclick="swipeAction('left')" title="Pasar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+          <div class="action-btn small super" onclick="swipeAction('super')" title="Super Connect">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div class="action-btn large like" onclick="swipeAction('right')" title="Conectar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="action-btn small boost" onclick="showToast('🚀 Boost activado por 30 min')" title="Boost">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHATS -->
+    <div class="view" id="view-chats">
+      <div class="chats">
+        <h1 class="section-title">Conexiones</h1>
+        <p class="section-subtitle">Tus matches y conversaciones</p>
+
+        <div class="matches-row" id="matchesRow"></div>
+        <div class="chat-list" id="chatList"></div>
+      </div>
+    </div>
+
+    <!-- CHAT ROOM -->
+    <div class="view" id="view-chatRoom">
+      <div class="chat-room active" id="chatRoom">
+        <div class="chat-room-header">
+          <div class="back-btn" onclick="switchView('chats')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </div>
+          <div class="chat-room-avatar" id="chatRoomAvatar"></div>
+          <div class="chat-room-info">
+            <div class="chat-room-name" id="chatRoomName"></div>
+            <div class="chat-room-status">● en línea</div>
+          </div>
+        </div>
+        <div class="match-banner" id="matchBanner"></div>
+        <div class="messages" id="messages"></div>
+        <div class="message-input">
+          <input type="text" id="messageInput" placeholder="Escribe un mensaje..." onkeydown="if(event.key==='Enter') sendMessage()">
+          <button class="send-btn" onclick="sendMessage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="view" id="view-events">
+      <div class="events">
+        <h1 class="section-title">Eventos</h1>
+        <p class="section-subtitle">Networking en vivo y próximos</p>
+
+        <div class="events-filters">
+          <div class="filter-chip active" onclick="filterEvents(this, 'all')">Todos</div>
+          <div class="filter-chip" onclick="filterEvents(this, 'live')">En vivo</div>
+          <div class="filter-chip" onclick="filterEvents(this, 'upcoming')">Próximos</div>
+          <div class="filter-chip" onclick="filterEvents(this, 'mx')">México</div>
+          <div class="filter-chip" onclick="filterEvents(this, 'us')">USA</div>
+        </div>
+
+        <div id="eventsList"></div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="view" id="view-profile">
+      <div class="profile">
+        <div class="profile-header">
+          <div class="profile-avatar" id="profileAvatar" onclick="changePhoto()">
+            CR
+            <div class="edit-photo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+          </div>
+          <div class="profile-name" id="profileName">Carlos Rodríguez</div>
+          <div class="profile-role" id="profileRole">CEO · Ciudad Maderas</div>
+        </div>
+
+        <div class="profile-stats">
+          <div class="profile-stat"><div class="profile-stat-value">247</div><div class="profile-stat-label">Conexiones</div></div>
+          <div class="profile-stat"><div class="profile-stat-value">38</div><div class="profile-stat-label">Eventos</div></div>
+          <div class="profile-stat"><div class="profile-stat-value">94%</div><div class="profile-stat-label">Match rate</div></div>
+        </div>
+
+        <div class="subs-trigger" onclick="showSubsModal()">
+          <div class="subs-trigger-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div class="subs-trigger-text">
+            <strong>Actualizar a Premier</strong>
+            <small>Visualización prioritaria y más</small>
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+
+        <div class="profile-section">
+          <div class="profile-section-title">Información</div>
+          <div class="form-field"><label>Nombre completo</label><input type="text" id="inputName" value="Carlos Rodríguez"></div>
+          <div class="form-field"><label>Puesto</label><input type="text" id="inputRole" value="CEO"></div>
+          <div class="form-field"><label>Empresa</label><input type="text" id="inputCompany" value="Ciudad Maderas"></div>
+          <div class="form-field"><label>Ciudad</label><input type="text" id="inputCity" value="Querétaro, MX"></div>
+          <div class="form-field"><label>Bio</label><textarea id="inputBio">Inversionista inmobiliario. Construyendo desarrollos en LATAM y expandiendo hacia el sur de EE.UU.</textarea></div>
+        </div>
+
+        <div class="profile-section">
+          <div class="profile-section-title">Sector</div>
+          <div class="interests-pickable" id="sectorsList"></div>
+        </div>
+
+        <div class="profile-section">
+          <div class="profile-section-title">Busco</div>
+          <div class="interests-pickable" id="interestsList"></div>
+        </div>
+
+        <div class="profile-section">
+          <button class="btn" style="width:100%" onclick="saveProfile()">Guardar cambios</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ MATCH MODAL ============ -->
+  <div class="match-modal" id="matchModal">
+    <div class="match-title">¡Conexión!</div>
+    <div class="match-subtitle" id="matchSubtitle"></div>
+    <div class="match-avatars">
+      <div class="match-avatar" id="myMatchAvatar" style="background:linear-gradient(135deg,#4a4a5e,#2a2a3e);">CR</div>
+      <div class="match-avatar" id="theirMatchAvatar"></div>
+    </div>
+    <div class="match-actions">
+      <button class="btn primary" onclick="openChatFromMatch()">Enviar mensaje</button>
+      <button class="btn ghost" onclick="closeMatchModal()">Seguir descubriendo</button>
+    </div>
+  </div>
+
+  <!-- ============ SUBSCRIPTION MODAL ============ -->
+  <div class="subs-modal" id="subsModal">
+    <div class="subs-modal-header">
+      <div class="subs-modal-title">Planes</div>
+      <div class="close-modal" onclick="closeSubsModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+
+    <div class="subs-hero">
+      <h1>Conecta con <em>las personas correctas</em></h1>
+      <p>Maximiza tu inversión en cada evento</p>
+    </div>
+
+    <div class="plans">
+
+      <div class="plan" data-plan="free" onclick="selectPlan(this)">
+        <div class="plan-header">
+          <div>
+            <div class="plan-name">Member</div>
+            <div class="plan-tagline">Para empezar</div>
+          </div>
+          <div class="plan-price">
+            <div class="plan-price-amount">Gratis</div>
+            <div class="plan-price-period">para siempre</div>
+          </div>
+        </div>
+        <ul class="plan-features">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>50 swipes por día</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Chats ilimitados con tus matches</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Acceso a eventos en tu ciudad</li>
+          <li class="dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Cambio de ubicación</li>
+          <li class="dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Visualización prioritaria</li>
+        </ul>
+      </div>
+
+      <div class="plan selected" data-plan="plus" onclick="selectPlan(this)">
+        <div class="plan-popular">Más elegido</div>
+        <div class="plan-header">
+          <div>
+            <div class="plan-name">Plus</div>
+            <div class="plan-tagline">Para viajeros frecuentes</div>
+          </div>
+          <div class="plan-price">
+            <div class="plan-price-amount">$5<small>/mes</small></div>
+            <div class="plan-price-period">USD</div>
+          </div>
+        </div>
+        <ul class="plan-features">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Swipes ilimitados</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Cambia tu ubicación a cualquier ciudad</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Pre-acceso a eventos antes que nadie</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Ver quién te dio swipe</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>5 Super Connects al mes</li>
+        </ul>
+      </div>
+
+      <div class="plan premier" data-plan="premier" onclick="selectPlan(this)">
+        <div class="plan-header">
+          <div>
+            <div class="plan-name" style="display:flex;align-items:center;gap:8px;">
+              Premier
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#ffd700"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div class="plan-tagline">Para los que cierran negocios</div>
+          </div>
+          <div class="plan-price">
+            <div class="plan-price-amount">$19<small>/mes</small></div>
+            <div class="plan-price-period">USD</div>
+          </div>
+        </div>
+        <ul class="plan-features">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Todo lo de Plus</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Visualización prioritaria — apareces primero</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Insignia Premier verificada</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Super Connects ilimitados</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Asistente de match con IA</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>Lista de invitados VIP en eventos</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="subs-cta">
+      <button class="subs-cta-btn" onclick="confirmSubscription()">Continuar con Plus — $5/mes</button>
+    </div>
+  </div>
+
+  <!-- ============ BOTTOM NAV ============ -->
+  <div class="bottom-nav">
+    <div class="nav-item active" data-view="discover" onclick="switchView('discover')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      <span>Descubrir</span>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item has-notif" data-view="chats" onclick="switchView('chats')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <span>Chats</span>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" data-view="events" onclick="switchView('events')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Eventos</span>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" data-view="profile" onclick="switchView('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Perfil</span>
+      <div class="nav-dot"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ============ DATA ============
+  const COLORS = [
+    'linear-gradient(135deg, #d4ff3e 0%, #6b8a1a 100%)',
+    'linear-gradient(135deg, #4a9eff 0%, #1e5fa8 100%)',
+    'linear-gradient(135deg, #ff6b6b 0%, #c43e3e 100%)',
+    'linear-gradient(135deg, #a78bfa 0%, #6d4ce0 100%)',
+    'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)',
+    'linear-gradient(135deg, #34d399 0%, #059669 100%)',
+    'linear-gradient(135deg, #f472b6 0%, #be185d 100%)',
+    'linear-gradient(135deg, #60a5fa 0%, #1d4ed8 100%)',
+    'linear-gradient(135deg, #fb923c 0%, #c2410c 100%)',
+    'linear-gradient(135deg, #14b8a6 0%, #0f766e 100%)',
+    'linear-gradient(135deg, #e11d48 0%, #881337 100%)',
+    'linear-gradient(135deg, #8b5cf6 0%, #5b21b6 100%)',
+  ];
+
+  const SECTORS = ['Inmobiliario', 'Tecnología', 'Finanzas', 'Marketing', 'Salud', 'Educación', 'Manufactura', 'Energía', 'Retail', 'Hospitalidad', 'Consultoría', 'Legal'];
+  const INTERESTS = ['Inversionistas', 'Socios', 'Clientes', 'Mentores', 'Talento', 'Proveedores', 'Alianzas', 'Asesores', 'Distribuidores'];
+
+  const PROFILES = [
+    { name: 'Ana Martínez', age: 34, role: 'Directora de Inversiones', company: 'Capital Norte', city: 'CDMX', bio: 'Busco proyectos inmobiliarios en LATAM con ROI alto. 15 años en banca privada.', sectors: ['Finanzas', 'Inmobiliario'], looking: ['Socios', 'Proyectos'], priority: true },
+    { name: 'Diego Hernández', age: 41, role: 'Founder & CEO', company: 'PropTech MX', city: 'Monterrey', bio: 'SaaS para inmobiliarias. Buscando expansión a EE.UU. y serie B.', sectors: ['Tecnología', 'Inmobiliario'], looking: ['Inversionistas', 'Clientes'] },
+    { name: 'Sofía Ramírez', age: 29, role: 'Head of Growth', company: 'Banzai Ventures', city: 'Guadalajara', bio: 'Escalando startups B2B de pre-seed a Serie A. Pregúntame sobre go-to-market.', sectors: ['Marketing', 'Tecnología'], looking: ['Clientes', 'Talento'] },
+    { name: 'Roberto Castillo', age: 47, role: 'Managing Partner', company: 'Castillo & Asociados', city: 'San Diego, CA', bio: 'Family office con foco en infraestructura. $200M AUM. Abrimos oficina en MX.', sectors: ['Finanzas'], looking: ['Proyectos', 'Asesores'], priority: true },
+    { name: 'Valentina López', age: 31, role: 'Directora Comercial', company: 'Solaris Energy', city: 'Querétaro', bio: 'Energía solar comercial. Buscando socios para parques en el bajío.', sectors: ['Energía', 'Inmobiliario'], looking: ['Socios', 'Clientes'] },
+    { name: 'Marcos Treviño', age: 38, role: 'VP Operations', company: 'LogistiMX', city: 'Monterrey', bio: 'Logística last-mile. Operamos en 12 ciudades. Abierto a fusiones.', sectors: ['Manufactura', 'Tecnología'], looking: ['Alianzas', 'Inversionistas'] },
+    { name: 'Camila Reyes', age: 27, role: 'CTO', company: 'NeuralCode', city: 'CDMX', bio: 'IA aplicada a real estate. Modelos de valuación predictiva. Stanford PhD.', sectors: ['Tecnología'], looking: ['Inversionistas', 'Mentores'], priority: true },
+    { name: 'Felipe Cárdenas', age: 52, role: 'Presidente', company: 'Grupo Cárdenas', city: 'Mérida', bio: 'Holding familiar: hoteles, agro, construcción. Diversificando portafolio.', sectors: ['Hospitalidad', 'Inmobiliario'], looking: ['Socios', 'Proyectos'] },
+    { name: 'Isabella Mora', age: 33, role: 'Senior Advisor', company: 'McKinsey & Co.', city: 'CDMX', bio: 'Consultoría estratégica para PEs. Especialista en M&A en LATAM.', sectors: ['Consultoría', 'Finanzas'], looking: ['Clientes'] },
+    { name: 'Andrés Vega', age: 36, role: 'Founder', company: 'Vega Holdings', city: 'Cancún', bio: 'Desarrollo turístico de lujo en Riviera Maya. Buscando capital para 3 proyectos.', sectors: ['Hospitalidad', 'Inmobiliario'], looking: ['Inversionistas'] },
+  ];
+
+  const EVENTS = [
+    { name: 'NAREP Summit San Diego', date: '15', month: 'May', location: 'San Diego, CA', attendees: 3247, status: 'live', category: 'us', tags: ['Real Estate', 'Inversión'] },
+    { name: 'Expo Bienes Raíces CDMX', date: '23', month: 'May', location: 'WTC México', attendees: 1850, status: 'upcoming', category: 'mx', tags: ['Inmobiliario'] },
+    { name: 'Latam Founders Summit', date: '02', month: 'Jun', location: 'Monterrey, NL', attendees: 920, status: 'upcoming', category: 'mx', tags: ['Startups', 'Venture'] },
+    { name: 'PropTech Connect', date: '12', month: 'Jun', location: 'Miami, FL', attendees: 2400, status: 'upcoming', category: 'us', tags: ['Tech', 'Real Estate'] },
+    { name: 'CEO Forum Querétaro', date: '28', month: 'May', location: 'Querétaro, QRO', attendees: 540, status: 'upcoming', category: 'mx', tags: ['Liderazgo'] },
+  ];
+
+  // ============ STATE ============
+  let state = {
+    currentView: 'discover',
+    cardIndex: 0,
+    lastSwipe: null,
+    matches: [],
+    chats: {},
+    activeChatId: null,
+    selectedPlan: 'plus',
+    eventFilter: 'all',
+    profile: {
+      sectors: ['Inmobiliario', 'Finanzas'],
+      interests: ['Inversionistas', 'Socios']
+    }
+  };
+
+  // ============ NAVIGATION ============
+  function switchView(view) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + view).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+    state.currentView = view;
+    // Show top bar only on discover
+    document.getElementById('topBar').style.display = (view === 'discover') ? 'flex' : 'none';
+  }
+
+  // ============ DISCOVER / SWIPE ============
+  function getInitials(name) {
+    return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  }
+
+  function renderCardStack() {
+    const stack = document.getElementById('cardStack');
+    stack.innerHTML = '';
+
+    if (state.cardIndex >= PROFILES.length) {
+      stack.innerHTML = `
+        <div class="empty-stack">
+          <h3>Has visto todos por hoy</h3>
+          <p>Vuelve mañana o cambia de ubicación con Plus</p>
+        </div>`;
+      return;
+    }
+
+    // Render the next card (under) and current card (on top)
+    for (let i = Math.min(state.cardIndex + 1, PROFILES.length - 1); i >= state.cardIndex; i--) {
+      if (i >= PROFILES.length) continue;
+      const p = PROFILES[i];
+      const isTop = i === state.cardIndex;
+      const card = document.createElement('div');
+      card.className = 'swipe-card';
+      card.style.zIndex = 10 - (i - state.cardIndex);
+      card.style.transform = isTop ? '' : 'scale(0.96) translateY(8px)';
+      card.style.opacity = isTop ? '1' : '0.5';
+      card.dataset.index = i;
+      card.innerHTML = `
+        ${p.priority ? `<div class="priority-badge"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Premier</div>` : ''}
+        <div class="swipe-indicator like">Conectar</div>
+        <div class="swipe-indicator nope">Pasar</div>
+        <div class="card-photo" style="background: ${COLORS[i % COLORS.length]}">
+          <div class="initials">${getInitials(p.name)}</div>
+          <div class="photo-overlay"></div>
+          <div class="card-info">
+            <div class="card-name">${p.name} <span class="age">${p.age}</span></div>
+            <div class="card-role">${p.role}</div>
+            <div class="card-company">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              ${p.company} · ${p.city}
+            </div>
+          </div>
+        </div>
+        <div class="card-details">
+          <div class="detail-section">
+            <div class="detail-label">Bio</div>
+            <div class="detail-bio">${p.bio}</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-label">Sector</div>
+            <div class="tags">${p.sectors.map(s => `<div class="tag">${s}</div>`).join('')}</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-label">Busca</div>
+            <div class="tags">${p.looking.map(s => `<div class="tag accent">${s}</div>`).join('')}</div>
+          </div>
+        </div>
+      `;
+      stack.appendChild(card);
+      if (isTop) attachSwipeListeners(card);
+    }
+  }
+
+  function attachSwipeListeners(card) {
+    let startX = 0, startY = 0, currentX = 0, currentY = 0, isDragging = false;
+
+    const onStart = (e) => {
+      isDragging = true;
+      card.classList.add('dragging');
+      const point = e.touches ? e.touches[0] : e;
+      startX = point.clientX;
+      startY = point.clientY;
+    };
+
+    const onMove = (e) => {
+      if (!isDragging) return;
+      const point = e.touches ? e.touches[0] : e;
+      currentX = point.clientX - startX;
+      currentY = point.clientY - startY;
+      const rot = currentX / 20;
+      card.style.transform = `translate(${currentX}px, ${currentY}px) rotate(${rot}deg)`;
+      const likeEl = card.querySelector('.swipe-indicator.like');
+      const nopeEl = card.querySelector('.swipe-indicator.nope');
+      if (currentX > 0) {
+        likeEl.style.opacity = Math.min(currentX / 100, 1);
+        nopeEl.style.opacity = 0;
+      } else {
+        nopeEl.style.opacity = Math.min(-currentX / 100, 1);
+        likeEl.style.opacity = 0;
+      }
+    };
+
+    const onEnd = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      card.classList.remove('dragging');
+      const threshold = 100;
+      if (currentX > threshold) {
+        swipeAction('right');
+      } else if (currentX < -threshold) {
+        swipeAction('left');
+      } else {
+        card.style.transform = '';
+        card.querySelectorAll('.swipe-indicator').forEach(el => el.style.opacity = 0);
+      }
+      currentX = 0; currentY = 0;
+    };
+
+    card.addEventListener('mousedown', onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+    card.addEventListener('touchstart', onStart, { passive: true });
+    card.addEventListener('touchmove', onMove, { passive: true });
+    card.addEventListener('touchend', onEnd);
+  }
+
+  function swipeAction(direction) {
+    if (state.cardIndex >= PROFILES.length) return;
+    const profile = PROFILES[state.cardIndex];
+    const card = document.querySelector(`.swipe-card[data-index="${state.cardIndex}"]`);
+    if (!card) return;
+
+    state.lastSwipe = { index: state.cardIndex, direction };
+
+    if (direction === 'right') {
+      card.style.transform = 'translate(500px, -50px) rotate(20deg)';
+      card.style.opacity = '0';
+      // 70% chance of match for demo
+      if (Math.random() < 0.7) {
+        setTimeout(() => showMatch(profile), 300);
+      } else {
+        showToast('Swipe registrado');
+      }
+    } else if (direction === 'super') {
+      card.style.transform = 'translate(0, -600px)';
+      card.style.opacity = '0';
+      setTimeout(() => showMatch(profile, true), 300);
+    } else {
+      card.style.transform = 'translate(-500px, -50px) rotate(-20deg)';
+      card.style.opacity = '0';
+    }
+
+    setTimeout(() => {
+      state.cardIndex++;
+      renderCardStack();
+    }, 350);
+  }
+
+  function rewindCard() {
+    if (!state.lastSwipe || state.cardIndex === 0) {
+      showToast('Nada que rebobinar');
+      return;
+    }
+    state.cardIndex = state.lastSwipe.index;
+    state.lastSwipe = null;
+    renderCardStack();
+    showToast('⏪ Volviste atrás');
+  }
+
+  // ============ MATCH ============
+  let lastMatchedProfile = null;
+  function showMatch(profile, isSuper = false) {
+    lastMatchedProfile = profile;
+    document.getElementById('matchSubtitle').textContent = isSuper
+      ? `${profile.name} también te super-conectó`
+      : `Tú y ${profile.name} se interesaron mutuamente`;
+    const theirAvatar = document.getElementById('theirMatchAvatar');
+    theirAvatar.textContent = getInitials(profile.name);
+    theirAvatar.style.background = COLORS[PROFILES.indexOf(profile) % COLORS.length];
+    document.getElementById('matchModal').classList.add('show');
+
+    // Add to matches and chats
+    if (!state.matches.find(m => m.name === profile.name)) {
+      state.matches.unshift({ ...profile, unread: true, lastMessage: '¡Acabas de conectar!', time: 'ahora' });
+      state.chats[profile.name] = [];
+    }
+    document.querySelector('.nav-item[data-view="chats"]').classList.add('has-notif');
+  }
+
+  function closeMatchModal() {
+    document.getElementById('matchModal').classList.remove('show');
+    renderChats();
+  }
+
+  function openChatFromMatch() {
+    closeMatchModal();
+    openChat(lastMatchedProfile.name);
+  }
+
+  // ============ CHATS ============
+  function renderChats() {
+    const matchesRow = document.getElementById('matchesRow');
+    const chatList = document.getElementById('chatList');
+
+    if (state.matches.length === 0) {
+      matchesRow.innerHTML = '<div style="color: var(--text-muted); font-size: 13px; padding: 16px;">Aún no tienes matches. Empieza a hacer swipe.</div>';
+      chatList.innerHTML = '';
+      return;
+    }
+
+    matchesRow.innerHTML = state.matches.map((m, i) => `
+      <div class="match-item ${m.unread ? 'unread' : ''}" onclick="openChat('${m.name}')">
+        <div class="match-item-avatar" style="background: ${COLORS[PROFILES.findIndex(p => p.name === m.name) % COLORS.length]}">
+          ${getInitials(m.name)}
+        </div>
+        <div class="match-item-name">${m.name.split(' ')[0]}</div>
+      </div>
+    `).join('');
+
+    chatList.innerHTML = state.matches.map((m) => {
+      const messages = state.chats[m.name] || [];
+      const lastMsg = messages.length > 0 ? messages[messages.length - 1].text : m.lastMessage;
+      return `
+        <div class="chat-item" onclick="openChat('${m.name}')">
+          <div class="chat-avatar" style="background: ${COLORS[PROFILES.findIndex(p => p.name === m.name) % COLORS.length]}">
+            ${getInitials(m.name)}
+          </div>
+          <div class="chat-info">
+            <div class="chat-header-row">
+              <div class="chat-name">${m.name}</div>
+              <div class="chat-time">${m.time || 'ahora'}</div>
+            </div>
+            <div class="chat-preview ${m.unread ? 'unread' : ''}">${lastMsg}</div>
+          </div>
+          ${m.unread ? '<div class="chat-badge">NEW</div>' : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function openChat(name) {
+    state.activeChatId = name;
+    const match = state.matches.find(m => m.name === name);
+    if (match) match.unread = false;
+    const profile = PROFILES.find(p => p.name === name) || match;
+
+    document.getElementById('chatRoomName').textContent = name;
+    const av = document.getElementById('chatRoomAvatar');
+    av.textContent = getInitials(name);
+    av.style.background = COLORS[PROFILES.findIndex(p => p.name === name) % COLORS.length];
+
+    document.getElementById('matchBanner').innerHTML = `Conectaste con <strong>${name}</strong> · ${profile.role} en ${profile.company}`;
+
+    renderMessages();
+    switchView('chatRoom');
+  }
+
+  function renderMessages() {
+    const messages = state.chats[state.activeChatId] || [];
+    document.getElementById('messages').innerHTML = messages.map(m =>
+      `<div class="message ${m.from}">${m.text}</div>`
+    ).join('');
+    const container = document.getElementById('messages');
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const text = input.value.trim();
+    if (!text) return;
+    if (!state.chats[state.activeChatId]) state.chats[state.activeChatId] = [];
+    state.chats[state.activeChatId].push({ from: 'me', text });
+    input.value = '';
+    renderMessages();
+
+    // Simulate auto-reply
+    setTimeout(() => {
+      const replies = [
+        'Interesante, cuéntame más.',
+        '¿Estarás en NAREP Summit?',
+        'Suena bien, agendamos una llamada esta semana?',
+        'Mándame tu deck por aquí.',
+        'Justo estoy buscando algo así.',
+        'Perfect, te paso mi WhatsApp.'
+      ];
+      state.chats[state.activeChatId].push({ from: 'them', text: replies[Math.floor(Math.random() * replies.length)] });
+      renderMessages();
+    }, 1200);
+  }
+
+  // ============ EVENTS ============
+  function renderEvents() {
+    const filtered = EVENTS.filter(e => {
+      if (state.eventFilter === 'all') return true;
+      if (state.eventFilter === 'live') return e.status === 'live';
+      if (state.eventFilter === 'upcoming') return e.status === 'upcoming';
+      return e.category === state.eventFilter;
+    });
+
+    document.getElementById('eventsList').innerHTML = filtered.map((e, i) => `
+      <div class="event-card" onclick="joinEvent('${e.name}', this)">
+        <div class="event-cover">
+          <div class="event-date-tag">
+            <div class="event-date-day">${e.date}</div>
+            <div class="event-date-month">${e.month}</div>
+          </div>
+          ${e.status === 'live' ? '<div class="event-active-badge">EN VIVO</div>' : ''}
+          <div class="event-cover-text">${e.name.split(' ').slice(0, 3).join(' ')}</div>
+        </div>
+        <div class="event-body">
+          <div class="event-name">${e.name}</div>
+          <div class="event-meta">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg> ${e.location}</span>
+            <span>${e.tags.join(' · ')}</span>
+          </div>
+          <div class="event-stats">
+            <div class="event-attendees">
+              ${[0,1,2,3].map(n => `<div class="attendee-bubble" style="background:${COLORS[(i*4+n) % COLORS.length]}">${String.fromCharCode(65+n)}</div>`).join('')}
+              <span class="attendee-count">${e.attendees.toLocaleString()} asistentes</span>
+            </div>
+            <button class="event-join-btn">${e.status === 'live' ? 'Unirme' : 'RSVP'}</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterEvents(el, filter) {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    state.eventFilter = filter;
+    renderEvents();
+  }
+
+  function joinEvent(name, el) {
+    const btn = el.querySelector('.event-join-btn');
+    if (btn.classList.contains('joined')) {
+      btn.classList.remove('joined');
+      btn.textContent = 'RSVP';
+      showToast(`Saliste de ${name}`);
+    } else {
+      btn.classList.add('joined');
+      btn.textContent = '✓ Confirmado';
+      showToast(`✓ Confirmado a ${name}`);
+    }
+  }
+
+  // ============ PROFILE ============
+  function renderProfileTags() {
+    document.getElementById('sectorsList').innerHTML = SECTORS.map(s => `
+      <div class="interest-pick ${state.profile.sectors.includes(s) ? 'selected' : ''}" onclick="toggleTag('sectors', '${s}', this)">${s}</div>
+    `).join('');
+    document.getElementById('interestsList').innerHTML = INTERESTS.map(s => `
+      <div class="interest-pick ${state.profile.interests.includes(s) ? 'selected' : ''}" onclick="toggleTag('interests', '${s}', this)">${s}</div>
+    `).join('');
+  }
+
+  function toggleTag(category, tag, el) {
+    const list = state.profile[category];
+    const i = list.indexOf(tag);
+    if (i > -1) list.splice(i, 1); else list.push(tag);
+    el.classList.toggle('selected');
+  }
+
+  function saveProfile() {
+    const name = document.getElementById('inputName').value;
+    const role = document.getElementById('inputRole').value;
+    const company = document.getElementById('inputCompany').value;
+    document.getElementById('profileName').textContent = name;
+    document.getElementById('profileRole').textContent = `${role} · ${company}`;
+    document.getElementById('profileAvatar').firstChild.textContent = getInitials(name);
+    showToast('✓ Perfil actualizado');
+  }
+
+  function changePhoto() {
+    const colors = COLORS;
+    const current = document.getElementById('profileAvatar').style.background;
+    let next;
+    do { next = colors[Math.floor(Math.random() * colors.length)]; } while (next === current);
+    document.getElementById('profileAvatar').style.background = next;
+    showToast('Foto actualizada');
+  }
+
+  // ============ SUBSCRIPTION ============
+  function showSubsModal() { document.getElementById('subsModal').classList.add('show'); }
+  function closeSubsModal() { document.getElementById('subsModal').classList.remove('show'); }
+
+  function selectPlan(el) {
+    document.querySelectorAll('.plan').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+    state.selectedPlan = el.dataset.plan;
+    const btn = document.querySelector('.subs-cta-btn');
+    const labels = {
+      free: 'Continuar gratis',
+      plus: 'Continuar con Plus — $5/mes',
+      premier: 'Continuar con Premier — $19/mes'
+    };
+    btn.textContent = labels[state.selectedPlan];
+  }
+
+  function confirmSubscription() {
+    closeSubsModal();
+    if (state.selectedPlan === 'free') {
+      showToast('Plan Member activado');
+    } else {
+      showToast(`✓ Suscripción ${state.selectedPlan === 'plus' ? 'Plus' : 'Premier'} activada`);
+    }
+  }
+
+  // ============ TOAST ============
+  let toastTimer;
+  function showToast(text) {
+    const toast = document.getElementById('toast');
+    toast.textContent = text;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  // ============ FILTER BTN ============
+  document.getElementById('filterBtn').addEventListener('click', () => {
+    showToast('Filtros: sector, ciudad, intereses (próximamente)');
+  });
+  document.getElementById('boostBtn').addEventListener('click', () => {
+    showToast('🚀 Boost: aparece primero por 30 min');
+  });
+
+  // ============ INIT ============
+  renderCardStack();
+  renderChats();
+  renderEvents();
+  renderProfileTags();
+</script>
+
+</body>
+</html>
